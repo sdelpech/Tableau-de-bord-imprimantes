@@ -171,7 +171,19 @@
 					//echo $req;
 				}
 				else{
-		  			$req = "SELECT * FROM `printer` WHERE print_timestamp LIKE '$date_today%' ORDER BY print_ip DESC ";
+		  			$req = "WITH cte AS (
+						  SELECT p.*,
+								 ROW_NUMBER() OVER (PARTITION BY p.print_ip ORDER BY p.print_timestamp DESC) AS rn
+						  FROM printer p
+						  WHERE p.print_ip IN (
+							  SELECT print_ip
+							  FROM print_name
+						  )
+					  )
+					  SELECT *
+					  FROM cte
+					  WHERE rn = 1
+					  ORDER BY print_timestamp DESC;";
 					//echo $req;
 				}
 				$res_print = $conn->query($req);
