@@ -1,7 +1,7 @@
 <?php 
 	include "config.php";
 	
-	$pwd =  "PASSWORD";
+	$pwd =  "";
 	
 	if(isset($_GET["srch"])){
 		$search = $_GET["srch"];
@@ -103,7 +103,7 @@
   	<body>
 		
 	<header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-  	<a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="#">Imprimantes</a>
+  	<a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="https://sylvain.delpe.ch/print/tdb.php?pwd=sknduqkvnoienzrjkbnlvkjnbelkrvl">Imprimantes</a>
   	<button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
 		<span class="navbar-toggler-icon"></span>
   	</button>
@@ -141,6 +141,7 @@
 			  	<th scope="col">M</th>
 			  	<th scope="col">Y</th>
 			  	<th scope="col">24H</th>
+				<th scope="col">J 365</th>  
 				<th scope="col">Date</th>  
 				</tr>
 		  	</thead>
@@ -171,7 +172,19 @@
 					//echo $req;
 				}
 				else{
-		  			$req = "SELECT * FROM `printer` WHERE print_timestamp LIKE '$date_today%' ORDER BY print_ip DESC ";
+		  			$req = "WITH cte AS (
+						  SELECT p.*,
+								 ROW_NUMBER() OVER (PARTITION BY p.print_ip ORDER BY p.print_timestamp DESC) AS rn
+						  FROM printer p
+						  WHERE p.print_ip IN (
+							  SELECT print_ip
+							  FROM print_name
+						  )
+					  )
+					  SELECT *
+					  FROM cte
+					  WHERE rn = 1
+					  ORDER BY print_timestamp DESC;";
 					//echo $req;
 				}
 				$res_print = $conn->query($req);
@@ -183,8 +196,17 @@
 					$nom = $conn->query($req_nom);
 					$nom = $nom->fetch_assoc();
 					
+					
+					
 					$compteur_total = $val_print["print_cpt_b"] + $val_print["print_cpt_c"];
 					$totdlt = $val_print["dlt_b"] + $val_print["dlt_c"];
+					
+					$dj365 = date('Y-m-d H:m:s', strtotime('-1 year'));
+					$reqj365 = "SELECT sum(dlt_b), sum(dlt_c) FROM `printer` where print_timestamp > '$dj365' AND print_ip='$ip'";
+					//echo $reqj365;
+					$j365 = $conn->query($reqj365);
+					$j365 = $j365->fetch_assoc();
+					
 					echo "<tr>";
 					echo "<td>". $i ."</td>";
 					echo "<td>". $nom["print_name"]."</td>";
@@ -217,12 +239,39 @@
 							</div>
 						</td>
 					<?php
+					$prix365 = ($j365["sum(dlt_b)"]*$nom["cost_b"]) + ($j365["sum(dlt_c)"] * $nom["cost_c"]);
+					$prix24 = ($val_print["dlt_b"]*$nom["cost_b"]) + ($val_print["dlt_c"]*$nom["cost_c"]) ;
+					$montant24 = $montant24 + $prix24;
+					$montant365 = $montant365 + $prix365;
 					
-					echo "<td>". $totdlt . "</td>";
+					if(($prix365 != 0) ){
+						echo "<td>". $totdlt . "<br>" . $prix24 . " €</td>";
+						echo "<td>". $j365["sum(dlt_b)"] + $j365["sum(dlt_c)"] . "<br>" . $prix365  . "€</td>";						
+					}
+					else{
+						echo "<td>". $totdlt ."</td>";
+						echo "<td>". $j365["sum(dlt_b)"] + $j365["sum(dlt_c)"] . "</td>";
+					}
 					echo "<td>". $val_print["print_timestamp"]."</td>";
 					echo "</tr>";
 				}
 		  	?>
+			  <tr>
+				  <td></td>
+				  <td></td>
+				  <td></td>
+				  <td></td>
+				  <td></td>
+				  <td></td>
+				  <td></td>
+				  <td></td>
+				  <td></td>
+				  <td></td>
+				  <td></td>
+				  <td><?php echo $montant24?> €</td>
+				  <td><?php echo $montant365?> €</td>
+				  <td></td>
+			  </tr>
 		  	</tbody>
 			</table>
 	  	</div>
