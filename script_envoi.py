@@ -3,7 +3,6 @@ import time
 import requests
 from pysnmp.entity.rfc3413.oneliner import cmdgen # snmp requests
 
-
 iod_serial = "1.3.6.1.4.1.2699.1.2.1.2.1.1.2.1"
 iod_model = "1.3.6.1.2.1.25.3.2.1.3.1"
 iod_name="1.3.6.1.2.1.1.5.0"
@@ -23,6 +22,22 @@ iod_toner_cyan_lxmrk = "1.3.6.1.2.1.43.11.1.1.9.1.5"
 iod_toner_yellow_lxmrk = "1.3.6.1.2.1.43.11.1.1.9.1.10"
 iod_toner_magenta_lxmrk = "1.3.6.1.2.1.43.11.1.1.9.1.7"
 iod_toner_max_lxmrk = 5000
+#####COPIEURS###
+iod_toner_black_koni = "1.3.6.1.2.1.43.11.1.1.9.1.1"
+iod_toner_cyan_koni = "1.3.6.1.2.1.43.11.1.1.9.1.2"
+iod_toner_magenta_koni = "1.3.6.1.2.1.43.11.1.1.9.1.3"
+iod_toner_yellow_koni = "1.3.6.1.2.1.43.11.1.1.9.1.4"
+iod_cnt_blk_koni = "	1.3.6.1.4.1.1129.2.3.50.1.3.21.6.1.2.1.3"
+iod_cnt_col_koni = "1.3.6.1.4.1.1129.2.3.50.1.3.21.6.1.2.1.1"
+#####XEROX#####
+iod_model_xrx = "1.3.6.1.2.1.1.1.0"
+iod_model_name_xrx ="1.3.6.1.2.1.1.5.0"
+iod_cnt_blk_xrx = "1.3.6.1.4.1.253.8.53.13.2.1.6.1.20.34"
+iod_cnt_col_xrx = "1.3.6.1.4.1.253.8.53.13.2.1.6.1.20.33"
+iod_toner_black_xrx = "1.3.6.1.2.1.43.11.1.1.8.1.31"
+iod_toner_cyan_xrx ="1.3.6.1.2.1.43.11.1.1.9.1.2"
+iod_toner_yellow_xrx ="1.3.6.1.2.1.43.11.1.1.9.1.3"
+iod_toner_magenta_xrx ="1.3.6.1.2.1.43.11.1.1.9.1.4"
 
 def surcent(nb,total):
 	nb = nb * 100 / int(total)
@@ -62,10 +77,11 @@ def get_info(iod, IP):
 			print('%s at %s' % (errorStatus.prettyPrint(), varBinds[int(errorIndex)-1] if errorIndex else '?'))
 		else:
 			for varBind in varBinds:
+				print(filtre(varBind[1]))
 				return(filtre(varBind[1]))
 				
 def deja(ip,quoi):
-	test = requests.post("https://sylvain.delpe.ch/print/deja.php?ip=" + ip + "&quoi=" + quoi )
+	test = requests.post("https://URL/print/deja.php?ip=" + ip + "&quoi=" + quoi )
 	return test.text
 		
 def printer_data(IP,BC,MARK):
@@ -105,6 +121,29 @@ def printer_data(IP,BC,MARK):
 			printer_toner_left_C = "%.2f" % surcent(get_info(iod_toner_cyan_lxmrk, IP),5000)
 			printer_toner_left_Y = "%.2f" % surcent(get_info(iod_toner_yellow_lxmrk, IP),5000)
 			printer_toner_left_M = "%.2f" % surcent(get_info(iod_toner_magenta_lxmrk, IP),5000)
+		if(MARK == "KONICA"):
+			printer_serial = " "
+			printer_model = get_info(iod_model_xrx, IP)	
+			printer_name = get_info(iod_model_name_xrx, IP)
+			printer_counter = get_info(iod_total_page, IP)
+			printer_counter_black = get_info(iod_cnt_blk_koni, IP)
+			printer_counter_color = get_info(iod_cnt_col_koni, IP)
+			printer_toner_left_B = get_info(iod_toner_black_koni, IP)
+			printer_toner_left_C = get_info(iod_toner_cyan_koni, IP)
+			printer_toner_left_Y = get_info(iod_toner_yellow_koni, IP)
+			printer_toner_left_M = get_info(iod_toner_magenta_koni, IP)
+		if(MARK == "XEROX"):
+			printer_serial = " "
+			printer_model = get_info(iod_model_xrx, IP)	
+			printer_name = get_info(iod_model_name_xrx, IP)
+			printer_counter = get_info(iod_total_page, IP)
+			printer_counter_black = get_info(iod_cnt_blk_xrx, IP)
+			printer_counter_color = get_info(iod_cnt_col_xrx, IP)
+			printer_toner_left_B = "%.2f" % surcent(get_info(iod_toner_black_xrx, IP),6500)  
+			printer_toner_left_C = "%.2f" % surcent(get_info(iod_toner_cyan_xrx, IP),6500)
+			printer_toner_left_Y = "%.2f" % surcent(get_info(iod_toner_yellow_xrx, IP),6500)
+			printer_toner_left_M = "%.2f" % surcent(get_info(iod_toner_magenta_xrx, IP),6500)
+			
 			
 		print(printer_toner_left_B)
 		print(deja(IP,"IP"))
@@ -112,21 +151,25 @@ def printer_data(IP,BC,MARK):
 			if(BC == "C"):
 				if(MARK == "HP"):
 					print(IP + " : " + printer_model + "(" + printer_serial + ") : " + printer_name +" -> " + printer_counter + "pages("+ printer_counter_black + "  " + printer_counter_color + ") B:" + printer_toner_left_B +"% C:"+ printer_toner_left_C + "% M:" + printer_toner_left_M +"% Y:" + printer_toner_left_Y + "%")
-					reponse = requests.post("https://sylvain.delpe.ch/print/print.php",data={"tkn":"PASSWORD","ip":IP,"cpt_b":printer_counter_black,"cpt_c":printer_counter_color,"ton_b":printer_toner_left_B,"ton_c":printer_toner_left_C,"ton_y":printer_toner_left_Y,"ton_m":printer_toner_left_M})
+					reponse = requests.post("https://URL/print/print.php",data={"tkn":"","ip":IP,"cpt_b":printer_counter_black,"cpt_c":printer_counter_color,"ton_b":printer_toner_left_B,"ton_c":printer_toner_left_C,"ton_y":printer_toner_left_Y,"ton_m":printer_toner_left_M})
 					print(reponse.text)
-				else:
+				if(MARK =="LXMRK"):
 					print(IP + " : " + printer_model + "(" + printer_serial + ") : " + printer_name +" -> " + printer_counter + "pages(" + printer_counter_black + " " + printer_counter_color + ") B:" + printer_toner_left_B +"% C:"+ printer_toner_left_C + "% M:" + printer_toner_left_M +"% Y:" + printer_toner_left_Y + "%")
-					reponse = requests.post("https://sylvain.delpe.ch/print/print.php",data={"tkn":"PASSWORD","ip":IP,"cpt_b":printer_counter_black,"cpt_c":printer_counter_color,"ton_b":printer_toner_left_B,"ton_c":printer_toner_left_C,"ton_y":printer_toner_left_Y,"ton_m":printer_toner_left_M})
+					reponse = requests.post("https://URL/print/print.php",data={"tkn":"","ip":IP,"cpt_b":printer_counter_black,"cpt_c":printer_counter_color,"ton_b":printer_toner_left_B,"ton_c":printer_toner_left_C,"ton_y":printer_toner_left_Y,"ton_m":printer_toner_left_M})
 					print(reponse.text)
+				if(MARK=="KONICA"):
+					reponse = requests.post("https://URL/print/print.php",data={"tkn":"","ip":IP,"cpt_b":printer_counter_black,"cpt_c":printer_counter_color,"ton_b":printer_toner_left_B,"ton_c":printer_toner_left_C,"ton_y":printer_toner_left_Y,"ton_m":printer_toner_left_M})
+				if(MARK=="XEROX"):
+						reponse = requests.post("https://URL/print/print.php",data={"tkn":"","ip":IP,"cpt_b":printer_counter_black,"cpt_c":printer_counter_color,"ton_b":printer_toner_left_B,"ton_c":printer_toner_left_C,"ton_y":printer_toner_left_Y,"ton_m":printer_toner_left_M})
 		
 			else:
 				print(IP + " : " + printer_model + "(" + printer_serial + ") : " + printer_name +" -> " + printer_counter + "pages B:" + printer_toner_left_B + "%")
-				reponse = requests.post("https://sylvain.delpe.ch/print/print.php",data={"tkn":"PASSWORD","ip":IP,"cpt_b":printer_counter_black,"cpt_c":"NULL","ton_b":printer_toner_left_B,"ton_c":"NULL","ton_y":"NULL","ton_m":"NULL"})
+				reponse = requests.post("https://URL/print/print.php",data={"tkn":"","ip":IP,"cpt_b":printer_counter_black,"cpt_c":"NULL","ton_b":printer_toner_left_B,"ton_c":"NULL","ton_y":"NULL","ton_m":"NULL"})
 				print(reponse.text)
 				time.sleep(3)
-			
-printer_data("192.168.0.36","B","HP")
-printer_data("192.168.0.117","B","HP")
+printer_data("192.168.0.195","C","XEROX")			
+printer_data("192.168.0.36","C","KONICA")
+printer_data("192.168.0.117","C","KONICA")
 printer_data("192.168.0.162","B","HP")
 printer_data("192.168.0.188","B","HP")
 printer_data("192.168.0.196","B","HP")
@@ -167,8 +210,9 @@ printer_data("192.168.0.242","B","HP")
 printer_data("10.2.5.2","B","HP")
 printer_data("10.2.6.2","B","HP")
 printer_data("10.2.0.20","C","HP")
-printer_data("10.2.8.2","B","HP")
 printer_data("10.2.7.2","B","HP")
+printer_data("10.2.8.2","B","HP")
+printer_data("10.2.9.2","B","HP")
 printer_data("10.2.11.2","B","HP")
 printer_data("10.2.13.2","B","HP")
 printer_data("10.2.17.24","C","LXMRK")
@@ -176,5 +220,5 @@ printer_data("10.2.19.80","C","LXMRK")
 
 print(deja("","dlt"))
 if(deja("", "dlt") == "FALSE"):
-	reponse_daily = requests.post("https://sylvain.delpe.ch/print/print_daily.php")
+	reponse_daily = requests.post("https://URL/print/print_daily.php")
 	print(reponse_daily.text)
