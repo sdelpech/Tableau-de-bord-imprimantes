@@ -129,10 +129,8 @@
 			<table class="table table-striped table-sm">
 		  	<thead>
 				<tr>
-			  	<th></th>
+			  	<th scope="col"></th>
 			  	<th scope="col">Nom</th>
-			  	<th scope="col">IP</th>
-			  	<th scope="col">SN</th>
 			  	<th scope="col">Compteur Noir</th>
 			  	<th scope="col">Couleur</th>
 			  	<th scope="col">Total</th>
@@ -142,7 +140,8 @@
 			  	<th scope="col">Y</th>
 			  	<th scope="col">24H</th>
 				<th scope="col">J 365</th>  
-				<th scope="col">Date</th>  
+				<th scope="col">Date</th>
+				<th scope="col">IP/SN</th>
 				</tr>
 		  	</thead>
 		  	<tbody>
@@ -210,9 +209,8 @@
 					echo "<tr>";
 					echo "<td>". $i ."</td>";
 					echo "<td>". $nom["print_name"]."</td>";
-					?><td><a href="http://<?php echo $val_print["print_ip"]?>"><?php echo $val_print["print_ip"]?></a></td>
-					<?php
-					echo "<td>". $nom["print_serial"]."</td>";
+					
+					
 					echo "<td>". $val_print["print_cpt_b"] . "</td>";
 					echo "<td>". $val_print["print_cpt_c"] . "</td>";
 					echo "<td>". $compteur_total . "</td>";
@@ -239,20 +237,25 @@
 							</div>
 						</td>
 					<?php
-					$prix365 = ($j365["sum(dlt_b)"]*$nom["cost_b"]) + ($j365["sum(dlt_c)"] * $nom["cost_c"]);
-					$prix24 = ($val_print["dlt_b"]*$nom["cost_b"]) + ($val_print["dlt_c"]*$nom["cost_c"]) ;
+					$prix365 = ($j365["sum(dlt_b)"]*$nom["cost_b"]) + ($j365["sum(dlt_c)"] * $nom["cost_nb"]);
+					$prix24 = ($val_print["dlt_b"]*$nom["cost_b"]) + ($val_print["dlt_c"]*$nom["cost_nb"]) ;
 					$montant24 = $montant24 + $prix24;
 					$montant365 = $montant365 + $prix365;
 					
 					if(($prix365 != 0) ){
-						echo "<td>". $totdlt . "<br>" . $prix24 . " €</td>";
-						echo "<td>". $j365["sum(dlt_b)"] + $j365["sum(dlt_c)"] . "<br>" . $prix365  . "€</td>";						
+						echo "<td><p title='page NB:".$val_print["dlt_b"]."x". $nom["cost_b"] ."€ + page C: " . $val_print["dlt_c"] ."x". $nom["cost_nb"] ."€ = " . $prix24 ."€'>". $totdlt . "<br>" . $prix24 . " €</p></td>";
+						echo "<td><p title='page NB:".$j365["sum(dlt_b)"]."x". $nom["cost_b"] ."€ + page C: " . $j365["sum(dlt_c)"] ."x". $nom["cost_nb"] ."€ = " . $prix365 ."€'>". $j365["sum(dlt_b)"] + $j365["sum(dlt_c)"] . "<br>" . $prix365  . "€</p></td>";
 					}
 					else{
 						echo "<td>". $totdlt ."</td>";
 						echo "<td>". $j365["sum(dlt_b)"] + $j365["sum(dlt_c)"] . "</td>";
 					}
-					echo "<td>". $val_print["print_timestamp"]."</td>";
+					echo "<td><p title='" .$val_print["print_timestamp"] ."'>".date("d/m/Y", strtotime($val_print["print_timestamp"]))."</p></td>";
+					?><td><a href="http://<?php echo $val_print["print_ip"]?>"><?php echo $val_print["print_ip"]?></a><br>
+					   <?php echo  $nom["print_serial"]; ?>
+					</td>
+					<?php
+					
 					echo "</tr>";
 				}
 		  	?>
@@ -266,10 +269,9 @@
 				  <td></td>
 				  <td></td>
 				  <td></td>
-				  <td></td>
-				  <td></td>
 				  <td><?php echo $montant24?> €</td>
 				  <td><?php echo $montant365?> €</td>
+				  <td></td>
 				  <td></td>
 			  </tr>
 		  	</tbody>
